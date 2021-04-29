@@ -1,0 +1,3 @@
+﻿  Source.cpp
+E:\labs\lab Binary search Tree\Source.cpp(138): warning C4715: 'BST::shearch_help': not all control paths return a value
+  lab Binary search Tree.vcxproj -> E:\labs\lab Binary search Tree\Debug\lab Binary search Tree.exe
