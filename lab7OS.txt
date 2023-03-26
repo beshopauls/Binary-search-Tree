@@ -1,0 +1,85 @@
+#include <iostream>
+#include <stdio.h>
+#include <windows.h> 
+#define __TEXT(quote) quote
+#define FULL_PIPE_NAME L"\\\\.\\pipe\\SamplePipe"
+using namespace std;
+
+    HANDLE  hEvent2;
+    
+    DWORD WINAPI Thread(LPVOID pArg)
+    {
+        WaitForSingleObject(hEvent2, INFINITE);
+        HANDLE hPipeTh;
+        DWORD dwWritten;
+        hPipeTh = CreateFile(TEXT(FULL_PIPE_NAME),
+            GENERIC_READ | GENERIC_WRITE,
+            0,
+            NULL,
+            OPEN_ALWAYS,
+            0,
+            NULL);
+        
+        if (hPipeTh == INVALID_HANDLE_VALUE)
+        {
+            printf("error: %x\n", GetLastError());
+        }
+
+        if (hPipeTh != INVALID_HANDLE_VALUE)
+        {
+            WriteFile(hPipeTh,
+                "Hi Iam Beshoy \0\n",
+                28,   
+                &dwWritten,
+                NULL);
+            printf("Поток 2: The file was successfully created, the data was successfully entered\n");
+            CloseHandle(hPipeTh);
+
+        }
+
+        return 0;
+    }
+    int main(void)
+    {        
+       
+        HANDLE hThr;
+        HANDLE hPipe;
+        char buffer[1024];
+        DWORD dwRead;
+        hEvent2 = CreateEvent(NULL, FALSE, FALSE, NULL);
+        hThr = CreateThread(NULL, 0, Thread, NULL, 0, NULL);
+        int Count = 10;
+        while (Count != 0)
+        {
+            if (Count > 5)
+            {
+                Count--;
+                printf("Поток 1: The event is not yet in the signaled state\n");
+            }
+            else 
+            {
+                printf("Поток 1: Event set to signaled state\n");
+                SetEvent(hEvent2);
+                CloseHandle(hThr);
+                break;
+            }
+        }
+        hPipe = CreateNamedPipe(TEXT(FULL_PIPE_NAME),PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1,1024,1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+        if (hPipe == INVALID_HANDLE_VALUE)
+        {
+            printf("error: %x\n", GetLastError());
+        }
+            
+        if (ConnectNamedPipe(hPipe, NULL))   
+            {
+                while (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL))
+                {
+                    printf("Поток 1: Data received\n");
+                    printf("\n%s", buffer);
+                }
+            }
+            DisconnectNamedPipe(hPipe);   
+            printf("\n\n\n\n");
+        return 0;
+    }
+
